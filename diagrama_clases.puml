@@ -1,0 +1,126 @@
+@startuml Gestor de Inventario
+
+!theme materia
+' Quita los iconos de atributos para un look más limpio
+skinparam classAttributeIconSize 0
+' Esconde atributos y métodos vacíos para no saturar el diagrama
+hide empty members
+
+' Título del Diagrama
+title Diagrama de Clases: Sistema Gestor de Inventario
+
+' === CLASES PRINCIPALES (EL MODELO) ===
+
+' Clase base abstracta para todos los productos
+abstract class Producto {
+  # id: String
+  # nombre: String
+  # precio: double
+  # stock: int
+  --
+  + Producto(id: String, nombre: String, precio: double, stock: int)
+  + reducirStock(cantidad: int): void
+  + aumentarStock(cantidad: int): void
+  + {abstract} getDescripcionDetallada(): String
+}
+note left of Producto
+  **Clase Abstracta (Abstracción)**
+  Define la estructura común a todos los productos.
+  No se pueden crear objetos "Producto" directamente.
+end note
+
+' Clases concretas que heredan de Producto
+class Libro extends Producto {
+  - autor: String
+  - isbn: String
+  --
+  + getDescripcionDetallada(): String
+}
+
+class Ropa extends Producto {
+  - talla: String
+  - color: String
+  --
+  + getDescripcionDetallada(): String
+}
+
+class Alimento extends Producto {
+  - fechaVencimiento: LocalDate
+  --
+  + getDescripcionDetallada(): String
+}
+
+
+' Clase que gestiona la colección de productos
+class Inventario {
+  - listaProductos: List<Producto>
+  - {static} instancia: Inventario
+  --
+  + {static} getInstancia(): Inventario
+  + agregarProducto(p: Producto): void
+  + buscarProductoPorId(id: String): Producto
+  + registrarVenta(productoId: String, cantidad: int): Venta
+  + getProductosConStockBajo(umbral: int): List<Producto>
+}
+note right of Inventario
+  **Clase Gestora (Composición)**
+  Contiene y gestiona todos los objetos de tipo Producto.
+  Se implementa como Singleton para asegurar una única
+  instancia del inventario en toda la aplicación.
+end note
+
+' Clase para registrar transacciones
+class Venta {
+    - idVenta: String
+    - fecha: LocalDateTime
+    - productosVendidos: Map<Producto, Integer>
+    - totalVenta: double
+}
+
+
+' === CLASES DE LA INTERFAZ (VISTA Y CONTROLADOR) ===
+
+' La clase principal que inicia la aplicación JavaFX
+class MainApp extends javafx.application.Application {
+  + start(primaryStage: Stage): void
+}
+
+' El controlador que conecta la lógica con la interfaz
+class InventarioViewController {
+  - inventario: Inventario
+  --
+  + initialize(): void
+  + onBotonAgregarClick(): void
+  + onBotonVenderClick(): void
+  + onBotonReporteClick(): void
+  + actualizarTabla(): void
+}
+note top of InventarioViewController
+  **Controlador (MVC)**
+  Actúa como puente entre la Vista (FXML)
+  y el Modelo (Inventario). No contiene lógica
+  de negocio, solo maneja eventos de la UI.
+end note
+
+
+' === RELACIONES ENTRE CLASES ===
+
+' Herencia: Libro, Ropa y Alimento SON UN TIPO DE Producto
+Producto <|-- Libro
+Producto <|-- Ropa
+Producto <|-- Alimento
+
+' Composición: Inventario TIENE Productos. Si el inventario se destruye, los productos también.
+Inventario "1" *-- "0..*" Producto
+
+' Asociación: Una Venta está asociada con uno o más productos.
+Venta "1" -- "1..*" Producto
+
+' Dependencia: El Controlador USA el Inventario para realizar operaciones.
+InventarioViewController ..> Inventario : usa
+
+' Dependencia: La App principal crea e inicia el Controlador.
+MainApp ..> InventarioViewController : crea
+
+
+@enduml
