@@ -26,14 +26,13 @@ public abstract class Producto {
         }
     }
 
-    // --- Getters (sin cambios) ---
+    // Getters
     public String getId() { return id; }
     public String getNombre() { return nombre; }
     public double getPrecio() { return precio; }
     public int getStock() { return stock; }
 
-    // --- Setters (NUEVOS) ---
-    // Necesarios para la funcionalidad de "Modificar"
+    // Setters
     public void setNombre(String nombre) { this.nombre = nombre; }
     public void setPrecio(double precio) { this.precio = precio; }
     public void setStock(int stock) { this.stock = stock; }
