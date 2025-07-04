@@ -8,7 +8,7 @@ public class TestBackend {
     public static void main(String[] args) {
         System.out.println("--- INICIANDO PRUEBA DEL BACKEND ---");
 
-        // 1. Obtenemos la instancia única del inventario (Singleton)
+        // 1. Obtenemos la instancia unica del inventario
         Inventario inventario = Inventario.getInstancia();
 
         // 2. Agregamos productos de diferentes tipos (Herencia y Polimorfismo)
@@ -20,18 +20,18 @@ public class TestBackend {
         // 3. Mostramos el estado inicial del inventario
         imprimirInventario("--- ESTADO INICIAL DEL INVENTARIO ---", inventario);
 
-        // 4. Probamos la búsqueda
+        // 4. Probamos la busqueda
         System.out.println("\n[ACCIÓN] Buscando productos que contengan 'polera'...");
         List<Producto> resultadosBusqueda = inventario.buscarProductosPorNombre("polera");
         System.out.println("Resultados de la búsqueda:");
         resultadosBusqueda.forEach(p -> System.out.println(" - " + p.getDescripcionDetallada()));
 
-        // 5. Probamos la modificación
+        // 5. Probamos la modificacion.
         System.out.println("\n[ACCIÓN] Modificando el precio y stock de la Polera (R001)...");
         Ropa poleraModificada = new Ropa("R001", "Polera de Algodón Premium", 18000, 25, "M", "Azul Marino");
         inventario.modificarProducto("R001", poleraModificada);
 
-        // 6. Probamos una venta
+        // 6. Probamos una venta.
         System.out.println("\n[ACCIÓN] Registrando la venta de 3 Pantalones (R002)...");
         Optional<Venta> ventaRealizada = inventario.registrarVenta("R002", 3);
         if (ventaRealizada.isPresent()) {

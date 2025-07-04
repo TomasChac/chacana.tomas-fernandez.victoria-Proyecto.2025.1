@@ -11,11 +11,11 @@ public class Ropa extends Producto {
         this.color = color;
     }
 
-    // --- Getters (sin cambios) ---
+    // Getters
     public String getTalla() { return talla; }
     public String getColor() { return color; }
 
-    // --- Setters (NUEVOS) ---
+    // Setters
     public void setTalla(String talla) { this.talla = talla; }
     public void setColor(String color) { this.color = color; }
 
