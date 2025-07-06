@@ -22,20 +22,49 @@ public class FormularioProductoViewController {
     @FXML private Button saveButton;
     @FXML private Button cancelButton;
 
+
     private Inventario inventario;
     private InventarioViewController mainController;
+    private boolean modoEdicion = false;
+    private Producto productoAEditar;
 
     public void setMainController(InventarioViewController mainController, Inventario inventario) {
         this.mainController = mainController;
         this.inventario = inventario;
     }
 
+    /**
+     * Recibe un producto y llena los campos del formulario con sus datos.
+     * @param producto El producto a editar.
+     */
+    public void setProductoParaEditar(Producto producto) {
+        this.modoEdicion = true;
+        this.productoAEditar = producto;
+
+        // Llenar los campos del formulario
+        idField.setText(producto.getId());
+        idField.setEditable(false); // El ID no se puede cambiar
+        nombreField.setText(producto.getNombre());
+        precioField.setText(String.valueOf(producto.getPrecio()));
+        stockField.setText(String.valueOf(producto.getStock()));
+
+        // Llenar campos específicos según el tipo de producto
+        if (producto instanceof Libro) {
+            tipoProductoComboBox.setValue("Libro");
+            campoExtra1Field.setText(((Libro) producto).getAutor());
+            campoExtra2Field.setText(((Libro) producto).getIsbn());
+        } else if (producto instanceof Ropa) {
+            tipoProductoComboBox.setValue("Ropa");
+            campoExtra1Field.setText(((Ropa) producto).getTalla());
+            campoExtra2Field.setText(((Ropa) producto).getColor());
+        }
+        tipoProductoComboBox.setDisable(true); // El tipo no se puede cambiar
+    }
+
     @FXML
     private void initialize() {
         tipoProductoComboBox.getItems().addAll("Libro", "Ropa");
         tipoProductoComboBox.getSelectionModel().selectFirst();
-
-        // Listener para cambiar los labels de los campos extra dinámicamente
         tipoProductoComboBox.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
                 switch (newVal) {
@@ -54,45 +83,38 @@ public class FormularioProductoViewController {
 
     @FXML
     private void onBotonGuardarClick() {
-        // 1. Leer los datos del formulario
-        String tipo = tipoProductoComboBox.getValue();
-        String id = idField.getText();
         String nombre = nombreField.getText();
-
-        // 2. Validar la entrada
-        if (id.isEmpty() || nombre.isEmpty()) {
-            mostrarAlerta("Error de Validación", "Los campos ID y Nombre no pueden estar vacíos.");
+        if (nombre.isEmpty()) {
+            mostrarAlerta("Error de Validación", "El campo Nombre no puede estar vacío.");
             return;
         }
 
         try {
             double precio = Double.parseDouble(precioField.getText());
             int stock = Integer.parseInt(stockField.getText());
-            String extra1 = campoExtra1Field.getText();
-            String extra2 = campoExtra2Field.getText();
+            // validaciones de precio y stock
 
-            if (precio < 0 || stock < 0) {
-                mostrarAlerta("Error de Validación", "El precio y el stock no pueden ser negativos.");
-                return;
-            }
-
-            // 3. Crear el objeto Producto adecuado
-            Producto nuevoProducto = null;
-            if ("Libro".equals(tipo)) {
-                nuevoProducto = new Libro(id, nombre, precio, stock, extra1, extra2);
-            } else if ("Ropa".equals(tipo)) {
-                nuevoProducto = new Ropa(id, nombre, precio, stock, extra1, extra2);
-            }
-
-            // 4. Llamar al backend para agregar el producto
-            if (nuevoProducto != null && inventario.agregarProducto(nuevoProducto)) {
-                // 5. Actualizar la tabla en la ventana principal
-                mainController.actualizarTabla();
-                // 6. Cerrar la ventana del formulario
-                onBotonCancelarClick();
+            // Creamos un objeto temporal con los nuevos datos
+            Producto productoActualizado;
+            if ("Libro".equals(tipoProductoComboBox.getValue())) {
+                productoActualizado = new Libro(idField.getText(), nombre, precio, stock, campoExtra1Field.getText(), campoExtra2Field.getText());
             } else {
-                mostrarAlerta("Error de Lógica", "El ID del producto ya existe en el inventario.");
+                productoActualizado = new Ropa(idField.getText(), nombre, precio, stock, campoExtra1Field.getText(), campoExtra2Field.getText());
             }
+            
+            if (modoEdicion) {
+                // Si estamos en modo edición, llamamos al método para modificar
+                inventario.modificarProducto(productoAEditar.getId(), productoActualizado);
+            } else {
+                // Si no, llamamos al método para agregar
+                if (!inventario.agregarProducto(productoActualizado)) {
+                     mostrarAlerta("Error de Lógica", "El ID del producto ya existe en el inventario.");
+                     return;
+                }
+            }
+
+            mainController.actualizarTabla();
+            onBotonCancelarClick();
 
         } catch (NumberFormatException e) {
             mostrarAlerta("Error de Formato", "Por favor, ingrese un número válido para Precio y Stock.");
@@ -101,12 +123,10 @@ public class FormularioProductoViewController {
 
     @FXML
     private void onBotonCancelarClick() {
-        // Cierra la ventana (Stage) que contiene el botón.
         Stage stage = (Stage) cancelButton.getScene().getWindow();
         stage.close();
     }
     
-    // Método de ayuda para mostrar alertas de forma sencilla
     private void mostrarAlerta(String titulo, String contenido) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle(titulo);

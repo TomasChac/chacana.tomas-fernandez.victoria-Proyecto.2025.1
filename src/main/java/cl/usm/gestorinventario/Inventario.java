@@ -37,7 +37,7 @@ public class Inventario {
     }
 
     /**
-     * NUEVO: Busca productos por nombre (insensible a mayúsculas/minúsculas).
+     * Busca productos por nombre (insensible a mayúsculas y minúsculas)
      * @param texto El texto a buscar en el nombre del producto.
      * @return Una lista de productos que coinciden con la búsqueda.
      */
@@ -49,7 +49,7 @@ public class Inventario {
     }
 
     /**
-     * NUEVO: Elimina un producto del inventario por su ID.
+     * Elimina un producto del inventario por su ID
      * @param id El ID del producto a eliminar.
      * @return true si el producto fue encontrado y eliminado, false en caso contrario.
      */
@@ -58,7 +58,7 @@ public class Inventario {
     }
 
     /**
-     * NUEVO: Modifica un producto existente.
+     * Modifica un producto existente.
      * @param id El ID del producto a modificar.
      * @param datosNuevos Un objeto Producto con los nuevos datos.
      * @return true si el producto fue encontrado y modificado, false en caso contrario.
@@ -85,9 +85,6 @@ public class Inventario {
         return false;
     }
 
-    /**
-     * MODIFICADO: Ahora devuelve un Optional<Venta> para un mejor manejo.
-     */
     public Optional<Venta> registrarVenta(String productoId, int cantidad) {
         Optional<Producto> productoOpt = buscarProductoPorId(productoId);
         if (productoOpt.isPresent() && productoOpt.get().getStock() >= cantidad) {
