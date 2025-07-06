@@ -2,4 +2,3 @@ id,tipo,nombre,precio,stock,extra1,extra2
 "L001",Libro,"El Señor de los Anillos",25000.00,321,"0","9"
 "R001",Ropa,"Polera de Algodón",15000.00,321,"0","5"
 "R002",Ropa,"Pantalón Cargo",35000.00,34,"0","3"
-"L002",Libro,"poto peo",12321.00,1,"tmas","12312313"

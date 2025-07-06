@@ -1,0 +1,57 @@
+@startuml Diagrama de Secuencia: Registrar Venta
+
+!theme materia
+autonumber "<b>[0]</b>"
+
+actor "Vendedor" as User
+
+participant "<<Vista>>\nInterfaz Principal" as UI
+participant "<<Controlador>>\nInventarioViewController" as VC
+participant "<<Modelo>>\nInventario" as INV
+participant "<<Modelo>>\nproducto: Producto" as P
+
+User -> UI : 1. Selecciona un producto en la tabla
+User -> UI : 2. Presiona el botón "Vender..."
+activate UI
+
+UI -> VC : onBotonVenderClick()
+activate VC
+
+VC -> UI : crea y muestra TextInputDialog()
+UI --> User : 3. Solicita la cantidad
+
+User -> UI : 4. Ingresa la cantidad y presiona "OK"
+UI --> VC : devuelve Optional<String> con la cantidad
+
+alt Venta Válida
+
+    VC -> INV : 5. registrarVenta(productoId, cantidad)
+    activate INV
+
+    INV -> P : 6. reducirStock(cantidad)
+    activate P
+    deactivate P
+    
+    create Venta
+    INV -> Venta : new(producto, cantidad)
+    
+    INV -->> VC : 7. Devuelve Optional<Venta> exitoso
+    deactivate INV
+    
+    VC -> VC : 8. actualizarTabla()
+    
+    VC -> UI : 9. muestraAlertaSimple("Venta Exitosa", ...)
+
+else Stock Insuficiente o Error
+
+    INV -->> VC : Devuelve Optional.empty()
+    deactivate INV
+    
+    VC -> UI : muestraAlertaSimple("Error de Venta", ...)
+
+end
+
+deactivate VC
+deactivate UI
+
+@enduml

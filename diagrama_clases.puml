@@ -45,7 +45,6 @@ class Alimento extends Producto {
   + getDescripcionDetallada(): String
 }
 
-' Clase gestora con los MÉTODOS ACTUALIZADOS
 class Inventario {
   - listaProductos: List<Producto>
   - {static} instancia: Inventario
@@ -66,7 +65,6 @@ note right of Inventario
   instancia del inventario en toda la aplicación.
 end note
 
-' La clase Venta no necesita cambios en su definición aquí
 class Venta {
     - idVenta: String
     - fecha: LocalDateTime
@@ -74,6 +72,7 @@ class Venta {
     - cantidadVendida: int
     - totalVenta: double
 }
+
 
 ' === CLASES DE LA INTERFAZ (VISTA Y CONTROLADOR) ===
 
@@ -101,20 +100,25 @@ end note
 
 ' === RELACIONES ENTRE CLASES ===
 
-' Herencia (sin cambios)
+' Herencia
 Producto <|-- Libro
 Producto <|-- Ropa
 Producto <|-- Alimento
 
-' Composición (sin cambios)
+' Composición
 Inventario "1" *-- "0..*" Producto
 
-' Asociación (RELACIÓN ACTUALIZADA)
-' Ahora una Venta se asocia con exactamente 1 Producto
+' Asociación
 Venta "1" -- "1" Producto
 
-' Dependencias (sin cambios)
+' Dependencias
 InventarioViewController ..> Inventario : usa
 MainApp ..> InventarioViewController : crea
+
+' Dependencias del controlador a los tipos concretos (AJUSTE FINAL)
+' Indica que el controlador necesita conocer los tipos para el formulario.
+InventarioViewController ..> Libro
+InventarioViewController ..> Ropa
+InventarioViewController ..> Alimento
 
 @enduml
