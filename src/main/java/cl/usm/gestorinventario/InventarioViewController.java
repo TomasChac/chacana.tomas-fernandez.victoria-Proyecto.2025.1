@@ -9,6 +9,7 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -31,20 +32,19 @@ public class InventarioViewController {
 
     @FXML
     public void initialize() {
-        // 1. Configurar las columnas de la tabla
         columnaId.setCellValueFactory(new PropertyValueFactory<>("id"));
         columnaNombre.setCellValueFactory(new PropertyValueFactory<>("nombre"));
         columnaStock.setCellValueFactory(new PropertyValueFactory<>("stock"));
         columnaPrecio.setCellValueFactory(new PropertyValueFactory<>("precio"));
         columnaTipo.setCellValueFactory(new PropertyValueFactory<>("descripcionDetallada"));
 
-        // 2. Cargar datos de prueba
-        cargarDatosDePrueba();
+        // Cargar datos de prueba solo si el inventario está vacío (la primera vez)
+        if(inventario.getTodosLosProductos().isEmpty()){
+            cargarDatosDePrueba();
+        }
 
-        // 3. Cargar datos iniciales en la tabla
         actualizarTabla();
 
-        // 4. Añadir listener para busqueda dinamica
         searchField.textProperty().addListener((observable, oldValue, newValue) -> {
             List<Producto> productosFiltrados = inventario.buscarProductosPorNombre(newValue);
             tablaProductos.getItems().setAll(productosFiltrados);
@@ -59,14 +59,12 @@ public class InventarioViewController {
     }
 
     private void cargarDatosDePrueba() {
-        if (inventario.getTodosLosProductos().isEmpty()) {
-            inventario.agregarProducto(new Libro("L001", "El Señor de los Anillos", 25000, 10, "J.R.R. Tolkien", "978-0618640157"));
-            inventario.agregarProducto(new Ropa("R001", "Polera de Algodón", 15000, 20, "M", "Azul"));
-            inventario.agregarProducto(new Ropa("R002", "Pantalón Cargo", 35000, 5, "44", "Beige"));
-        }
+        inventario.agregarProducto(new Libro("L001", "El Señor de los Anillos", 25000, 10, "J.R.R. Tolkien", "978-0618640157"));
+        inventario.agregarProducto(new Ropa("R001", "Polera de Algodón", 15000, 20, "M", "Azul"));
+        inventario.agregarProducto(new Ropa("R002", "Pantalón Cargo", 35000, 5, "44", "Beige"));
     }
 
-    // Logica de los Botones
+    // Lógica de los Botones
 
     @FXML
     protected void onBotonBuscarClick() {
@@ -77,7 +75,7 @@ public class InventarioViewController {
 
     @FXML
     protected void onBotonAgregarClick() {
-        abrirFormularioProducto(null); // Pasamos null porque no estamos editando
+        abrirFormularioProducto(null);
     }
 
     @FXML
@@ -89,6 +87,49 @@ public class InventarioViewController {
         }
         abrirFormularioProducto(productoSeleccionado);
     }
+    
+    /**
+     * Logica para el botón Vender.
+     */
+    @FXML
+    protected void onBotonVenderClick() {
+        Producto productoSeleccionado = tablaProductos.getSelectionModel().getSelectedItem();
+
+        if (productoSeleccionado == null) {
+            mostrarAlertaSimple("Información", "Por favor, seleccione un producto para vender.");
+            return;
+        }
+
+        TextInputDialog dialog = new TextInputDialog("1");
+        dialog.setTitle("Registrar Venta");
+        dialog.setHeaderText("Vendiendo: " + productoSeleccionado.getNombre() + "\nStock disponible: " + productoSeleccionado.getStock());
+        dialog.setContentText("Por favor, ingrese la cantidad a vender:");
+
+        Optional<String> resultado = dialog.showAndWait();
+
+        resultado.ifPresent(cantidadStr -> {
+            try {
+                int cantidad = Integer.parseInt(cantidadStr);
+                if (cantidad <= 0) {
+                    mostrarAlertaSimple("Error", "La cantidad debe ser un número positivo.");
+                    return;
+                }
+
+                Optional<Venta> ventaExitosa = inventario.registrarVenta(productoSeleccionado.getId(), cantidad);
+
+                if (ventaExitosa.isPresent()) {
+                    actualizarTabla();
+                    mostrarAlertaSimple("Venta Exitosa", "Venta registrada correctamente.\n" + ventaExitosa.get().toString());
+                } else {
+                    mostrarAlertaSimple("Error de Venta", "No hay stock suficiente para realizar la venta.");
+                }
+
+            } catch (NumberFormatException e) {
+                mostrarAlertaSimple("Error de Formato", "Por favor, ingrese un número válido.");
+            }
+        });
+    }
+
 
     @FXML
     protected void onBotonEliminarClick() {
@@ -111,7 +152,7 @@ public class InventarioViewController {
         }
     }
     
-    // Metodos de Ayuda
+    // Metodos de Ayuda.
 
     private void abrirFormularioProducto(Producto productoAEditar) {
         try {

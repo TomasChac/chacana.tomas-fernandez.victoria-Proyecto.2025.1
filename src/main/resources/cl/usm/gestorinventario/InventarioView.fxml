@@ -47,6 +47,7 @@
                <children>
                   <Button mnemonicParsing="false" onAction="#onBotonAgregarClick" text="Agregar..." />
                   <Button mnemonicParsing="false" onAction="#onBotonModificarClick" text="Modificar..." />
+                  <Button mnemonicParsing="false" onAction="#onBotonVenderClick" text="Vender..." />
                   <Button mnemonicParsing="false" onAction="#onBotonEliminarClick" text="Eliminar" />
                </children>
                <VBox.margin>
