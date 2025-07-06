@@ -38,24 +38,26 @@ public class InventarioViewController {
         columnaPrecio.setCellValueFactory(new PropertyValueFactory<>("precio"));
         columnaTipo.setCellValueFactory(new PropertyValueFactory<>("descripcionDetallada"));
 
-        // Cargar datos de prueba solo si el inventario está vacío (la primera vez)
-        if(inventario.getTodosLosProductos().isEmpty()){
+        if (inventario.getTodosLosProductos().isEmpty()) {
             cargarDatosDePrueba();
         }
 
         actualizarTabla();
 
-        searchField.textProperty().addListener((observable, oldValue, newValue) -> {
-            List<Producto> productosFiltrados = inventario.buscarProductosPorNombre(newValue);
-            tablaProductos.getItems().setAll(productosFiltrados);
-        });
+        searchField.textProperty().addListener((obs, oldVal, newVal) -> onBotonBuscarClick());
 
         System.out.println("Vista inicializada y lista para usar.");
     }
 
     public void actualizarTabla() {
+        // Guarda el item seleccionado actualmente para no perder la selección
+        Producto seleccionado = tablaProductos.getSelectionModel().getSelectedItem();
         tablaProductos.getItems().clear();
         tablaProductos.getItems().addAll(inventario.getTodosLosProductos());
+        // Vuelve a seleccionar el item si aún existe
+        if (seleccionado != null) {
+            tablaProductos.getSelectionModel().select(seleccionado);
+        }
     }
 
     private void cargarDatosDePrueba() {
@@ -64,13 +66,26 @@ public class InventarioViewController {
         inventario.agregarProducto(new Ropa("R002", "Pantalón Cargo", 35000, 5, "44", "Beige"));
     }
 
-    // Lógica de los Botones
+    // Logica de los Botones
 
     @FXML
     protected void onBotonBuscarClick() {
         String textoBusqueda = searchField.getText();
         List<Producto> productosFiltrados = inventario.buscarProductosPorNombre(textoBusqueda);
         tablaProductos.getItems().setAll(productosFiltrados);
+    }
+
+    @FXML
+    protected void onBotonReporteClick() {
+        int umbral = 10;
+        List<Producto> productosConStockBajo = inventario.getProductosConStockBajo(umbral);
+        tablaProductos.getItems().setAll(productosConStockBajo);
+    }
+
+    @FXML
+    protected void onBotonMostrarTodosClick() {
+        searchField.clear(); // Limpia la barra de búsqueda también
+        actualizarTabla();
     }
 
     @FXML
@@ -82,19 +97,15 @@ public class InventarioViewController {
     protected void onBotonModificarClick() {
         Producto productoSeleccionado = tablaProductos.getSelectionModel().getSelectedItem();
         if (productoSeleccionado == null) {
-            mostrarAlertaSimple("Información", "Por favor, seleccione un producto de la tabla para modificar.");
+            mostrarAlertaSimple("Información", "Por favor, seleccione un producto para modificar.");
             return;
         }
         abrirFormularioProducto(productoSeleccionado);
     }
     
-    /**
-     * Logica para el botón Vender.
-     */
     @FXML
     protected void onBotonVenderClick() {
         Producto productoSeleccionado = tablaProductos.getSelectionModel().getSelectedItem();
-
         if (productoSeleccionado == null) {
             mostrarAlertaSimple("Información", "Por favor, seleccione un producto para vender.");
             return;
@@ -104,7 +115,6 @@ public class InventarioViewController {
         dialog.setTitle("Registrar Venta");
         dialog.setHeaderText("Vendiendo: " + productoSeleccionado.getNombre() + "\nStock disponible: " + productoSeleccionado.getStock());
         dialog.setContentText("Por favor, ingrese la cantidad a vender:");
-
         Optional<String> resultado = dialog.showAndWait();
 
         resultado.ifPresent(cantidadStr -> {
@@ -114,35 +124,31 @@ public class InventarioViewController {
                     mostrarAlertaSimple("Error", "La cantidad debe ser un número positivo.");
                     return;
                 }
-
                 Optional<Venta> ventaExitosa = inventario.registrarVenta(productoSeleccionado.getId(), cantidad);
-
                 if (ventaExitosa.isPresent()) {
                     actualizarTabla();
-                    mostrarAlertaSimple("Venta Exitosa", "Venta registrada correctamente.\n" + ventaExitosa.get().toString());
+                    mostrarAlertaSimple("Venta Exitosa", "Venta registrada correctamente.");
                 } else {
                     mostrarAlertaSimple("Error de Venta", "No hay stock suficiente para realizar la venta.");
                 }
-
             } catch (NumberFormatException e) {
                 mostrarAlertaSimple("Error de Formato", "Por favor, ingrese un número válido.");
             }
         });
     }
 
-
     @FXML
     protected void onBotonEliminarClick() {
         Producto productoSeleccionado = tablaProductos.getSelectionModel().getSelectedItem();
         if (productoSeleccionado == null) {
-            mostrarAlertaSimple("Información", "Por favor, seleccione un producto de la tabla para eliminar.");
+            mostrarAlertaSimple("Información", "Por favor, seleccione un producto para eliminar.");
             return;
         }
 
         Alert alertaConfirmacion = new Alert(Alert.AlertType.CONFIRMATION);
         alertaConfirmacion.setTitle("Confirmar Eliminación");
         alertaConfirmacion.setHeaderText("Eliminar: " + productoSeleccionado.getNombre());
-        alertaConfirmacion.setContentText("¿Está seguro de que desea continuar?");
+        alertaConfirmacion.setContentText("¿Está seguro?");
         Optional<ButtonType> resultado = alertaConfirmacion.showAndWait();
 
         if (resultado.isPresent() && resultado.get() == ButtonType.OK) {
@@ -152,18 +158,17 @@ public class InventarioViewController {
         }
     }
     
-    // Metodos de Ayuda.
+    // métodos de ayuda.
 
     private void abrirFormularioProducto(Producto productoAEditar) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("FormularioProductoView.fxml"));
             Parent root = loader.load();
-            
             FormularioProductoViewController controller = loader.getController();
             controller.setMainController(this, inventario);
             
             String titulo;
-            if(productoAEditar != null) {
+            if (productoAEditar != null) {
                 titulo = "Modificar Producto";
                 controller.setProductoParaEditar(productoAEditar);
             } else {
