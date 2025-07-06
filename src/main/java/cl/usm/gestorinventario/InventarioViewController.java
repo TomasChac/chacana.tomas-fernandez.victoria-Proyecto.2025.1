@@ -77,7 +77,7 @@ public class InventarioViewController {
      * Método de ayuda para refrescar la tabla con los datos actuales del inventario.
      * Lo usaremos cada vez que hagamos un cambio (agregar, modificar, eliminar).
      */
-    private void actualizarTabla() {
+    public void actualizarTabla() {
         tablaProductos.getItems().clear(); // Limpiamos la tabla
         tablaProductos.getItems().addAll(inventario.getTodosLosProductos()); // Añadimos los datos frescos
     }
