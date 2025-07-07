@@ -1,4 +1,6 @@
 id,tipo,nombre,precio,stock,extra1,extra2
 "L001",Libro,"El Señor de los Anillos",25000.00,321,"0","9"
-"R001",Ropa,"Polera de Algodón",15000.00,321,"0","5"
-"R002",Ropa,"Pantalón Cargo",35000.00,34,"0","3"
+"R001",Ropa,"Polera de Algodón",11000.00,200,"0","5"
+"L002",Libro,"Harry Potter",21100.00,11,"anonimo","312312"
+"R004",Ropa,"Camisa",6000.00,32,"M","Negro"
+"A001",Alimento,"Fideos",1000.00,11,"21-12-2026",""

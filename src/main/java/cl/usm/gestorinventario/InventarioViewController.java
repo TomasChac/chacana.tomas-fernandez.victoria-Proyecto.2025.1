@@ -18,8 +18,17 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Controlador principal de la aplicación. Maneja la lógica de la vista
+ * principal (InventarioView.fxml), incluyendo la tabla de productos y
+ * todas las acciones de los botones.
+ *
+ * @author Tomás Ch., Victoria F., Jossefa Z.
+ * @version 1.2
+ */
 public class InventarioViewController {
 
+    // --- Componentes de la UI inyectados desde el FXML ---
     @FXML private TextField searchField;
     @FXML private TableView<Producto> tablaProductos;
     @FXML private TableColumn<Producto, String> columnaId;
@@ -28,71 +37,98 @@ public class InventarioViewController {
     @FXML private TableColumn<Producto, Double> columnaPrecio;
     @FXML private TableColumn<Producto, String> columnaTipo;
 
-    private Inventario inventario = Inventario.getInstancia();
+    // --- Conexión con el Modelo ---
+    private final Inventario inventario = Inventario.getInstancia();
 
+    /**
+     * Se ejecuta automáticamente después de que el archivo FXML ha sido cargado.
+     * Es el lugar ideal para configurar el estado inicial de la vista.
+     */
     @FXML
     public void initialize() {
+        // 1. Configurar las columnas para que sepan qué datos mostrar
         columnaId.setCellValueFactory(new PropertyValueFactory<>("id"));
         columnaNombre.setCellValueFactory(new PropertyValueFactory<>("nombre"));
         columnaStock.setCellValueFactory(new PropertyValueFactory<>("stock"));
         columnaPrecio.setCellValueFactory(new PropertyValueFactory<>("precio"));
         columnaTipo.setCellValueFactory(new PropertyValueFactory<>("descripcionDetallada"));
 
+        // 2. Cargar datos iniciales si el inventario está vacío (primera ejecución)
         if (inventario.getTodosLosProductos().isEmpty()) {
             cargarDatosDePrueba();
         }
 
+        // 3. Poblar la tabla con los datos del inventario
         actualizarTabla();
 
+        // 4. Añadir listener para la búsqueda dinámica
         searchField.textProperty().addListener((obs, oldVal, newVal) -> onBotonBuscarClick());
-
         System.out.println("Vista inicializada y lista para usar.");
     }
 
+    /**
+     * Refresca la TableView para que muestre los datos más recientes del inventario.
+     * Este método es público para poder ser llamado desde otros controladores.
+     */
     public void actualizarTabla() {
-        // Guarda el item seleccionado actualmente para no perder la selección
         Producto seleccionado = tablaProductos.getSelectionModel().getSelectedItem();
         tablaProductos.getItems().clear();
         tablaProductos.getItems().addAll(inventario.getTodosLosProductos());
-        // Vuelve a seleccionar el item si aún existe
         if (seleccionado != null) {
             tablaProductos.getSelectionModel().select(seleccionado);
         }
     }
 
+    /**
+     * Carga un conjunto de productos de prueba en el inventario.
+     * Se utiliza solo si no existe un archivo de guardado previo.
+     */
     private void cargarDatosDePrueba() {
         inventario.agregarProducto(new Libro("L001", "El Señor de los Anillos", 25000, 10, "J.R.R. Tolkien", "978-0618640157"));
         inventario.agregarProducto(new Ropa("R001", "Polera de Algodón", 15000, 20, "M", "Azul"));
         inventario.agregarProducto(new Ropa("R002", "Pantalón Cargo", 35000, 5, "44", "Beige"));
     }
 
-    // Logica de los Botones
-
+    /**
+     * Maneja el evento de clic del botón "Buscar".
+     * Filtra la tabla según el texto ingresado en el campo de búsqueda.
+     */
     @FXML
     protected void onBotonBuscarClick() {
-        String textoBusqueda = searchField.getText();
-        List<Producto> productosFiltrados = inventario.buscarProductosPorNombre(textoBusqueda);
-        tablaProductos.getItems().setAll(productosFiltrados);
+        tablaProductos.getItems().setAll(inventario.buscarProductosPorNombre(searchField.getText()));
     }
 
+    /**
+     * Maneja el evento de clic del botón "Reporte Stock Bajo".
+     * Filtra la tabla para mostrar solo productos con 10 o menos unidades.
+     */
     @FXML
     protected void onBotonReporteClick() {
-        int umbral = 10;
-        List<Producto> productosConStockBajo = inventario.getProductosConStockBajo(umbral);
-        tablaProductos.getItems().setAll(productosConStockBajo);
+        tablaProductos.getItems().setAll(inventario.getProductosConStockBajo(10));
     }
 
+    /**
+     * Restaura la tabla para mostrar todos los productos del inventario.
+     */
     @FXML
     protected void onBotonMostrarTodosClick() {
-        searchField.clear(); // Limpia la barra de búsqueda también
+        searchField.clear();
         actualizarTabla();
     }
 
+    /**
+     * Maneja el evento de clic del botón "Agregar...".
+     * Lanza el formulario para crear un nuevo producto.
+     */
     @FXML
     protected void onBotonAgregarClick() {
         abrirFormularioProducto(null);
     }
 
+    /**
+     * Maneja el evento de clic del botón "Modificar...".
+     * Lanza el formulario para editar el producto seleccionado.
+     */
     @FXML
     protected void onBotonModificarClick() {
         Producto productoSeleccionado = tablaProductos.getSelectionModel().getSelectedItem();
@@ -103,18 +139,22 @@ public class InventarioViewController {
         abrirFormularioProducto(productoSeleccionado);
     }
     
+    /**
+     * Maneja el evento de clic del botón "Vender...".
+     * Pide una cantidad y registra la venta, actualizando el stock.
+     */
     @FXML
     protected void onBotonVenderClick() {
-        Producto productoSeleccionado = tablaProductos.getSelectionModel().getSelectedItem();
-        if (productoSeleccionado == null) {
+        Producto p = tablaProductos.getSelectionModel().getSelectedItem();
+        if (p == null) {
             mostrarAlertaSimple("Información", "Por favor, seleccione un producto para vender.");
             return;
         }
 
         TextInputDialog dialog = new TextInputDialog("1");
         dialog.setTitle("Registrar Venta");
-        dialog.setHeaderText("Vendiendo: " + productoSeleccionado.getNombre() + "\nStock disponible: " + productoSeleccionado.getStock());
-        dialog.setContentText("Por favor, ingrese la cantidad a vender:");
+        dialog.setHeaderText("Vendiendo: " + p.getNombre() + "\nStock disponible: " + p.getStock());
+        dialog.setContentText("Ingrese la cantidad a vender:");
         Optional<String> resultado = dialog.showAndWait();
 
         resultado.ifPresent(cantidadStr -> {
@@ -124,12 +164,12 @@ public class InventarioViewController {
                     mostrarAlertaSimple("Error", "La cantidad debe ser un número positivo.");
                     return;
                 }
-                Optional<Venta> ventaExitosa = inventario.registrarVenta(productoSeleccionado.getId(), cantidad);
-                if (ventaExitosa.isPresent()) {
+                Optional<Venta> v = inventario.registrarVenta(p.getId(), cantidad);
+                if (v.isPresent()) {
                     actualizarTabla();
                     mostrarAlertaSimple("Venta Exitosa", "Venta registrada correctamente.");
                 } else {
-                    mostrarAlertaSimple("Error de Venta", "No hay stock suficiente para realizar la venta.");
+                    mostrarAlertaSimple("Error de Venta", "No hay stock suficiente.");
                 }
             } catch (NumberFormatException e) {
                 mostrarAlertaSimple("Error de Formato", "Por favor, ingrese un número válido.");
@@ -137,29 +177,35 @@ public class InventarioViewController {
         });
     }
 
+    /**
+     * Maneja el evento de clic del botón "Eliminar".
+     * Pide confirmación y elimina el producto seleccionado.
+     */
     @FXML
     protected void onBotonEliminarClick() {
-        Producto productoSeleccionado = tablaProductos.getSelectionModel().getSelectedItem();
-        if (productoSeleccionado == null) {
+        Producto p = tablaProductos.getSelectionModel().getSelectedItem();
+        if (p == null) {
             mostrarAlertaSimple("Información", "Por favor, seleccione un producto para eliminar.");
             return;
         }
 
-        Alert alertaConfirmacion = new Alert(Alert.AlertType.CONFIRMATION);
-        alertaConfirmacion.setTitle("Confirmar Eliminación");
-        alertaConfirmacion.setHeaderText("Eliminar: " + productoSeleccionado.getNombre());
-        alertaConfirmacion.setContentText("¿Está seguro?");
-        Optional<ButtonType> resultado = alertaConfirmacion.showAndWait();
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Confirmar Eliminación");
+        confirm.setHeaderText("Eliminar: " + p.getNombre());
+        confirm.setContentText("¿Está seguro?");
+        Optional<ButtonType> resultado = confirm.showAndWait();
 
         if (resultado.isPresent() && resultado.get() == ButtonType.OK) {
-            if (inventario.eliminarProducto(productoSeleccionado.getId())) {
+            if (inventario.eliminarProducto(p.getId())) {
                 actualizarTabla();
             }
         }
     }
     
-    // métodos de ayuda.
-
+    /**
+     * Abre la ventana del formulario para agregar o modificar un producto.
+     * @param productoAEditar El producto a editar, o null si se va a agregar uno nuevo.
+     */
     private void abrirFormularioProducto(Producto productoAEditar) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("FormularioProductoView.fxml"));
@@ -167,28 +213,28 @@ public class InventarioViewController {
             FormularioProductoViewController controller = loader.getController();
             controller.setMainController(this, inventario);
             
-            String titulo;
+            String titulo = (productoAEditar != null) ? "Modificar Producto" : "Agregar Nuevo Producto";
             if (productoAEditar != null) {
-                titulo = "Modificar Producto";
                 controller.setProductoParaEditar(productoAEditar);
-            } else {
-                titulo = "Agregar Nuevo Producto";
             }
 
             Stage dialogStage = new Stage();
             dialogStage.setTitle(titulo);
             dialogStage.initModality(Modality.WINDOW_MODAL);
             dialogStage.initOwner(tablaProductos.getScene().getWindow());
-            Scene scene = new Scene(root);
-            dialogStage.setScene(scene);
+            dialogStage.setScene(new Scene(root));
             dialogStage.showAndWait();
-
         } catch (IOException e) {
             e.printStackTrace();
             mostrarAlertaSimple("Error", "No se pudo abrir el formulario de producto.");
         }
     }
 
+    /**
+     * Método de ayuda para mostrar una alerta simple al usuario.
+     * @param titulo El título de la ventana de alerta.
+     * @param contenido El mensaje principal de la alerta.
+     */
     private void mostrarAlertaSimple(String titulo, String contenido) {
         Alert alerta = new Alert(Alert.AlertType.INFORMATION);
         alerta.setTitle(titulo);

@@ -1,8 +1,26 @@
 # chacana.tomas-fernandez.victoria-Proyecto.2025.1
 ELO239 Proyecto 2025-1
 
-Documento de Requerimientos: Casos de Uso
+## Integrantes
 
+Victoria Fernandez
+Jossefa Zamora
+Tomás Chacana
+
+## Generar Documentación
+
+Para generar la documentación del proyecto en formato HTML, ejecute el siguiente comando desde la raíz del proyecto. La documentación se creará en la carpeta `docs/`.
+
+```bash
+javadoc --module-path "/opt/javafx-sdk-21.0.7/lib" --add-modules javafx.controls,javafx.fxml -d docs -sourcepath src/main/java -subpackages cl.usm.gestorinventario
+```
+Luego:
+
+```bash
+xdg-open docs/index.html
+```
+
+Documento de Requerimientos: Casos de Uso
 Proyecto: Sistema Gestor de Inventario
 Versión: 1.0
 Fecha: 24 de junio de 2025
